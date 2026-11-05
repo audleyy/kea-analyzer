@@ -7,6 +7,9 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QUrl>
+#include <QCheckBox>
+#include <QSpinBox> // поле для выбора целого числа с кнопками увеличения и уменьшения.
+#include <QDoubleSpinBox>
 
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
@@ -16,7 +19,7 @@ int main(int argc, char *argv[]) {
 	window.resize(900, 600);
 	window.setStyleSheet("background-color: white;");
 
-	QLabel label("Цель не указана");
+	QLabel label;
 	label.setTextFormat(Qt::PlainText);
 	label.setStyleSheet("color: black; background-color: white;");
 
@@ -57,6 +60,50 @@ int main(int argc, char *argv[]) {
 	QPushButton deleteButton("Удалить выбранную цель");
 	deleteButton.setStyleSheet(button.styleSheet());
 
+	QCheckBox permissionCheck("У меня есть разрешение на проверку");
+	permissionCheck.setStyleSheet("color: black;");
+
+	QPushButton scanButton("Начать проверку");
+	scanButton.setStyleSheet(button.styleSheet());
+
+	QLabel depthLabel("Глубина обхода:");
+	depthLabel.setStyleSheet("color: black;");
+
+	QSpinBox depthInput;
+	depthInput.setRange(0, 5);
+	depthInput.setValue(2);
+	depthInput.setFixedWidth(100);
+	depthInput.setStyleSheet(inputStyle);
+
+	QLabel pageLimitLabel("Максимум страниц:");
+	pageLimitLabel.setStyleSheet("color: black;");
+
+	QSpinBox pageLimitInput;
+	pageLimitInput.setRange(1, 1000);
+	pageLimitInput.setValue(100);
+	pageLimitInput.setFixedWidth(100);
+	pageLimitInput.setStyleSheet(inputStyle);
+
+	QLabel timeoutLabel("Тайм-аут запроса, секунд:");
+	timeoutLabel.setStyleSheet("color: black;");
+
+	QSpinBox timeoutInput;
+	timeoutInput.setRange(1, 60);
+	timeoutInput.setValue(10);
+	timeoutInput.setFixedWidth(100);
+	timeoutInput.setStyleSheet(inputStyle);
+
+	QLabel rateLabel("Запросов в секунду:");
+	rateLabel.setStyleSheet("color: black;");
+
+	QDoubleSpinBox rateInput;
+	rateInput.setRange(0.1, 5.0);
+	rateInput.setDecimals(1);
+	rateInput.setSingleStep(0.1);
+	rateInput.setValue(1.0);
+	rateInput.setFixedWidth(100);
+	rateInput.setStyleSheet(inputStyle);
+
 	QVBoxLayout layout(&window); // Вертикальный компоновщик, управляет расположением внутри окна
 	layout.addStretch();
 	layout.addWidget(&button, 0, Qt::AlignCenter); // Добавляет кнопку в компоновщик
@@ -66,6 +113,16 @@ int main(int argc, char *argv[]) {
 	layout.addWidget(&button, 0, Qt::AlignCenter);
 	layout.addWidget(&targetList, 0, Qt::AlignCenter);
 	layout.addWidget(&deleteButton, 0, Qt::AlignCenter);
+	layout.addWidget(&permissionCheck, 0, Qt::AlignCenter);
+	layout.addWidget(&scanButton, 0, Qt::AlignCenter);
+	layout.addWidget(&depthLabel, 0, Qt::AlignCenter);
+	layout.addWidget(&depthInput, 0, Qt::AlignCenter);
+	layout.addWidget(&pageLimitLabel, 0, Qt::AlignCenter);
+	layout.addWidget(&pageLimitInput, 0, Qt::AlignCenter);
+	layout.addWidget(&timeoutLabel, 0, Qt::AlignCenter);
+	layout.addWidget(&timeoutInput, 0, Qt::AlignCenter);
+	layout.addWidget(&rateLabel, 0, Qt::AlignCenter);
+	layout.addWidget(&rateInput, 0, Qt::AlignCenter);
 	layout.addStretch();
 
 	QObject::connect(&button, &QPushButton::clicked, &window, [&nameInput, &urlInput, &label, &targetList]() {
@@ -89,7 +146,7 @@ int main(int argc, char *argv[]) {
 		);
 
 		targetList.addItem(name + " — " + displayUrl);
-		label.setText("Цель: " + name + "\nАдрес: " + displayUrl);
+		// label.setText("Цель: " + name + "\nАдрес: " + displayUrl);
 
 		nameInput.clear();
 		urlInput.clear();
@@ -108,6 +165,25 @@ int main(int argc, char *argv[]) {
 
 		label.setText("Цель удалена");
 	});
+
+	QObject::connect(&scanButton, &QPushButton::clicked, &window, [&targetList, &permissionCheck, &label, &depthInput, &pageLimitInput, &timeoutInput, &rateInput]() {
+		if (targetList.selectedItems().isEmpty()) {
+			label.setText("Сначала выберите цель в списке.");
+			return;
+		}
+
+		if (!permissionCheck.isChecked()) {
+			label.setText("Подтвердите наличие разрешения на проверку.");
+			return;
+		}
+
+		int depth = depthInput.value();
+		int pageLimit = pageLimitInput.value();
+		int timeout = timeoutInput.value();
+		double rate = rateInput.value();
+
+		label.setText("Глубина: " + QString::number(depth) + ", максимум страниц: " + QString::number(pageLimit) + ", тайм-аут: " + QString::number(timeout) + " сек., запросов/сек.: " + QString::number(rate, 'f', 1));
+  });
 
 	window.show();
 
